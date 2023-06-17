@@ -48,55 +48,102 @@ class ExampleDataLoader:
     'price':                    (5118, 45400)
   }
 
-
-
-  data_types_numeric = {
-      'symboling'         : np.int8,
-      'normalized-losses' : np.float32,
-      'wheel-base'        : np.float32,
-      'length'            : np.float32,
-      'width'             : np.float32,
-      'height'            : np.float32,
-      'curb-weight'       : np.float32,
-      'engine-size'       : np.float32,
-      'bore'              : np.float32,
-      'stroke'            : np.float32,
-      'compression-ratio' : np.float32,
-      'horsepower'        : np.float32,
-      'peak-rpm'          : np.float32,
-      'city-mpg'          : np.float32,
-      'highway-mpg'       : np.float32,
-      'price'             : np.float32
+  data_rename_map = {
+    'symboling'          : 'symboling',
+    'normalized-losses'  : 'normalized_losses',
+    'make'               : 'make',
+    'fuel-type'          : 'fuel_type',
+    'aspiration'         : 'aspiration',
+    'num-of-doors'       : 'num_of_doors',
+    'body-style'         : 'body_style',
+    'drive-wheels'       : 'drive_wheels',
+    'engine-location'    : 'engine_location',
+    'wheel-base'         : 'wheel_base',
+    'length'             : 'length',
+    'width'              : 'width',
+    'height'             : 'height',
+    'curb-weight'        : 'curb_weight',
+    'engine-type'        : 'engine_type',
+    'num-of-cylinders'   : 'num_of_cylinders',
+    'engine-size'        : 'engine_size',
+    'fuel-system'        : 'fuel_system',
+    'bore'               : 'bore',
+    'stroke'             : 'stroke',
+    'compression-ratio'  : 'compression_ratio',
+    'horsepower'         : 'horsepower',
+    'peak-rpm'           : 'peak_rpm',
+    'city-mpg'           : 'city_mpg',
+    'highway-mpg'        : 'highway_mpg',
+    'price'              : 'price',
   }
 
-  label_name = 'symboling'
-  losses_name = 'normalized-losses'
+
+
+  data_infer_types = {
+    'symboling'          : np.int32,
+    'normalized_losses'  : np.float32,
+    'make'               : 'string',
+    'fuel_type'          : 'string',
+    'aspiration'         : 'string',
+    'num_of_doors'       : 'string',
+    'body_style'         : 'string',
+    'drive_wheels'       : 'string',
+    'engine_location'    : 'string',
+    'wheel_base'         : np.float32,
+    'length'             : np.float32,
+    'width'              : np.float32,
+    'height'             : np.float32,
+    'curb_weight'        : np.float32,
+    'engine_type'        : 'string',
+    'num_of_cylinders'   : 'string',
+    'engine_size'        : np.float32,
+    'fuel_system'        : 'string',
+    'bore'               : np.float32,
+    'stroke'             : np.float32,
+    'compression_ratio'  : np.float32,
+    'horsepower'         : np.float32,
+    'peak_rpm'           : np.float32,
+    'city_mpg'           : np.float32,
+    'highway_mpg'        : np.float32,
+    'price'              : np.float32
+  }
+
+  feature_label   = 'symboling'
+  feature_losses  = 'normalized-losses'
 
   features_categorical = [
     'make',
-    # 'fuel-type',
-    # 'aspiration',
-    # 'num-of-doors',
-    # 'body-style',
-    # 'drive-wheels',
-    # 'engine-location',
-    'engine-type',
-    # 'num-of-cylinders',
-    # 'fuel-system'
+    'fuel_type',
+    'aspiration',
+    'num_of_doors',
+    'body_style',
+    'drive_wheels',
+    'engine_location',
+    'engine_type',
+    'num_of_cylinders',
+    'fuel_system'
   ]
 
-  features_numeric = [    
-    "curb-weight",
-    "engine-size",
-    "horsepower",
-    "peak-rpm",
+  features_numeric_continuous = [    
+    'wheel_base',
+    'length',
+    'width',
+    'height',
+    'curb_weight',
+    'engine_size',
+    'bore',
+    'stroke',
+    'compression_ratio',
+    'horsepower',
+    'peak_rpm',
+    'city_mpg',
+    'highway_mpg',
+    'price'
   ]
 
 
   def __init__(self):
     self.df = None
-    self.data_attrs = self.data_spec.keys()
-    self.data_attrs_str = list(filter(lambda x: x not in self.data_types_numeric.keys(), self.data_attrs))
 
   def download(self, to_folder=None):
     if not to_folder or to_folder is None:
@@ -108,13 +155,20 @@ class ExampleDataLoader:
   def load(self):
     data_glob_path = list(Path(self.archive_dir).rglob('*data'))
     data_file_path = list(filter(lambda x: x.is_file(), data_glob_path))[0]
-    self.df = pd.read_csv(data_file_path, header=None, names=self.data_attrs, dtype=str, na_values='?')
+    self.df = pd.read_csv(data_file_path, header=None, names=self.data_spec.keys(), dtype=str, na_values='?')
     return self
 
   def clean(self):
     self.df = self.df.dropna()
-    self.df = self.df.astype(self.data_types_numeric)
-
-    # df['symboling-threshold'] = [1 if i > 0 else 0 for i in df['symboling']]
-    # df['symboling-threshold'].astype(np.int32)
+    self.df = self.df.rename(self.data_rename_map, axis=1)
+    self.df = self.df.astype(self.data_infer_types)
     return self
+
+  def drop_unused(self):
+    keep = [self.feature_label, self.feature_losses] + self.features_categorical + self.features_numeric_continuous
+    others = self.data_spec.keys()
+    drops = [i for i in others if i not in keep]
+
+    if drops:
+      self.df = self.df.drop(drops, axis=1)
+

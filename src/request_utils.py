@@ -7,12 +7,15 @@ from re import compile as re_compile
 from os.path import join as path_join
 from os.path import pathsep, relpath
 
-__re_invalid_chars = re_compile(r'[^\w_. -]')
+__re_illegal_chars = re_compile(r'[^\w_. -]')
+
+def sanitize_illegal_chars(string, substring):
+  return __re_illegal_chars.sub(substring, string)
 
 def url_to_fp(url):
   url_parsed = urlparse(url)
   netloc_path, file_path = url2pathname(url_parsed.netloc), url2pathname(url_parsed.path)
-  netloc_path = __re_invalid_chars.sub('-', netloc_path)
+  netloc_path = sanitize_illegal_chars('_', netloc_path)
   if url_parsed.path == '/':
     return netloc_path.strip('/').strip('\\')
   else:
