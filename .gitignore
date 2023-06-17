@@ -157,3 +157,4 @@ cache
 saved_models
 *.png
 *.xlsx
+*.csv
