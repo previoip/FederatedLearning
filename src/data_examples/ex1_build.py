@@ -66,7 +66,7 @@ def compile_model(
   return model
 
 
-def train_and_log_metrics(
+def train_and_log_metrics_deep_nn(
     model,
     tfds_train,
     tfds_val,

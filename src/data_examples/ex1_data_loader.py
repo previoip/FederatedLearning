@@ -124,7 +124,7 @@ class ExampleDataLoader:
     'fuel_system'
   ]
 
-  features_numeric_continuous = [    
+  features_numeric_continuous = [
     'wheel_base',
     'length',
     'width',
@@ -144,6 +144,7 @@ class ExampleDataLoader:
 
   def __init__(self):
     self.df = None
+    self.__is_renamed = False
 
   def download(self, to_folder=None):
     if not to_folder or to_folder is None:
@@ -161,12 +162,15 @@ class ExampleDataLoader:
   def clean(self):
     self.df = self.df.dropna()
     self.df = self.df.rename(self.data_rename_map, axis=1)
+    self.__is_renamed = True
     self.df = self.df.astype(self.data_infer_types)
     return self
 
   def drop_unused(self):
     keep = [self.feature_label, self.feature_losses] + self.features_categorical + self.features_numeric_continuous
     others = self.data_spec.keys()
+    if self.__is_renamed:
+      others = self.data_rename_map.values()
     drops = [i for i in others if i not in keep]
 
     if drops:
