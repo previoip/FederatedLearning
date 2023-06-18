@@ -154,7 +154,6 @@ cython_debug/
 # repository specifics
 data
 cache
-saved_models
 *.png
 *.xlsx
-*.csv
+./*.csv

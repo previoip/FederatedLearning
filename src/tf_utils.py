@@ -3,6 +3,10 @@ import csv
 from io import StringIO
 
 def df_to_tfds(df, label_col_name, shuffle=True, batch_size=32):
+  """Convert pandas dataframe into tensorflow dataset
+
+  Args:
+  """
   c_df = df.copy()
   labels = c_df.pop(label_col_name)
   c_df = {key: value[:,tf.newaxis] for key, value in df.items()}
@@ -17,33 +21,51 @@ def df_to_tfds(df, label_col_name, shuffle=True, batch_size=32):
   return tfds
 
 
+def eval_metrics(model, tsdf_test, keras_metrics={}):
+  """Evaluate prediction metrics on tensorflow
+     test dataset  
+
+  Args:
+  """
+
+  ret = {}
+  for x_test, y_test in tfds_test:
+    y_pred = loaded_model.predict(x_test)
+    for metric_name, metric in metrics.items():
+      metric.update_state(y_test, y_pred)
+
+  for metric_name, metric in metrics.items():
+    ret[metric_name] = metric.result().numpy()
+    metric.reset_states()
+
+  return ret
+
+
 class MetricsLogger(tf.keras.callbacks.Callback):
-    def __init__(self, filename, _metrics=['accuracy']):
-        super().__init__()
-        self.filename = filename
-        self.file = None
-        self.writer = None
-        self._metrics=_metrics
-        self._records = []
-        print('logging to', filename)
+  def __init__(self, filepath):
+    super().__init__()
+    print('logging to', filepath)
+    self.filepath = filepath
+    self.file = None
+    self.writer = None
 
-    def on_train_begin(self, logs=None):
-        self.file = open(self.filename, 'w')
-        self.writer = csv.DictWriter(self.file, ['epoch', 'loss'] + self._metrics)
-        self.writer.writeheader()
+  def on_train_begin(self, logs=None):
+    self._records = []
 
-    def on_epoch_end(self, epoch, logs=None):
-        row = {'epoch': epoch + 1}
+  def on_epoch_end(self, epoch, logs=None):
+    row = {'epoch': epoch + 1}
+    for k in logs.keys():
+      row[k] = logs[k]
+    self._records.append(row)
 
-        for k in self._metrics + ['loss']:
-            row[k] = logs[k]
-
-        self._records.append(row)
+  def on_train_end(self, logs=None):
+    fields = self._records[0].keys()
+    with open(self.filepath, 'w') as fo:
+      self.writer = csv.DictWriter(fo, fields, extrasaction='raise')
+      self.writer.writeheader()
+      for row in self._records:
         self.writer.writerow(row)
-        self.file.flush()
+      fo.flush()
 
-    def on_train_end(self, logs=None):
-        self.file.close()
-
-    def _get_records(self):
-        return self._records
+  def _get_records(self):
+      return self._records

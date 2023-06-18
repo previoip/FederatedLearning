@@ -9,9 +9,23 @@ from src.custom_types import TypeEnum
 from os.path import join as joinpath
 
 def generate_input_layers(tfds_train, data_loader):
+  """Generate input layers based on customized data_loader attributes.
+
+  Args:
+      tfds_train: TensorFlow Dataset for training
+      data_loader: data loader class instance 
+  """
+
+  # layers are stored in dictionary for verbosity, traceability, 
+  # and debugging purposes
+
   all_inputs = {}
   all_encoded_features = {}
 
+
+  # Normalization step for numeric features, please note alternative
+  # to normalization might be discretization, but it has not yet been
+  # implemented in this case
 
   all_inputs['normalization'] = {}
   all_encoded_features['normalization'] = {}
@@ -26,6 +40,10 @@ def generate_input_layers(tfds_train, data_loader):
     all_encoded_features['normalization'][col_name] = encoded_normalized_input
 
 
+  # for categorical features, since dataset is composed of
+  # features with string dtype, thus input layer uses 
+  # StringLookup -> CategoryEncoder Sequential layers
+
   all_inputs['categorical'] = {}
   all_encoded_features['categorical'] = {}
 
@@ -39,16 +57,43 @@ def generate_input_layers(tfds_train, data_loader):
 
   return all_inputs, all_encoded_features
 
+def build_input_layers(tfds, data_loader):
+  """Generator for input layers.
 
-def build_model(tfds, data_loader, name='model'):
+  Input layers constructed from generate_input_layers() yields 
+  python dictionary. This step flattens the dictionary and
+  concatenate encoded layers into one input representation 
+  into the model
 
+  Args:
+      tfds_train: TensorFlow Dataset for training
+      data_loader: data loader class instance 
+  """
   input_layers, encoded_layers = generate_input_layers(tfds, data_loader)
   input_layers = dict_to_flat_list(input_layers, ls=[])
   encoded_layers = dict_to_flat_list(encoded_layers, ls=[])
   feature_layers = tf.keras.layers.concatenate(encoded_layers)
 
+  return input_layers, feature_layers
 
-  x = tf.keras.layers.Dense(64, activation="relu")(feature_layers)
+def build_model(tfds, data_loader, name='model', activation='sigmoid'):
+  """Generator for the model.
+
+  Customize this generator for other types of algorithm
+  that fits the project requirements
+
+  Args:
+      tfds_train: TensorFlow Dataset for training
+      data_loader: data loader class instance
+      name[optional]: the name of the model for logger 
+        or other callbacks
+      activation[optional]: the activation function to 
+      pass through. Defaults to `sigmoid` for logistic
+      regression
+  """
+  input_layers, feature_layers = build_input_layers(tfds, data_loader)
+
+  x = tf.keras.layers.Dense(32, activation=activation)(feature_layers)
   x = tf.keras.layers.Dropout(0.5)(x)
   output = tf.keras.layers.Dense(1)(x)
 
@@ -66,29 +111,52 @@ def compile_model(
   return model
 
 
-def train_and_log_metrics_deep_nn(
+def train_and_log_metrics(
     model,
     tfds_train,
     tfds_val,
     epoch,
-    csv_metrics=''
+    csv_metrics_filepath = 'metrics'
   ):
-  if model.name != 'model':
-    filename = f'{model.name}_metrics.csv'
 
-  logger = MetricsLogger(filename=filename, _metrics=['accuracy', 'mse'])
+  filename = f'{model.name}_training_metrics.csv'
+  csv_metrics_filepath = joinpath(csv_metrics_filepath, filename)
+
+  logger = MetricsLogger(filepath=csv_metrics_filepath)
   history = model.fit(tfds_train, epochs=epoch, validation_data=tfds_val, callbacks=[logger], verbose=0)
   return model, logger, history
 
-def eval_example_data(
+def build_and_evaluate(
     tfds_train,
     tfds_val,
     data_loader,
     epoch=100,
     model_name='model',
-    csv_metrics_path='metrics',
+    csv_metrics_filepath ='metrics',
   ):
-  model = build_model(tfds_train, data_loader, name=model_name)
-  compile_model(model)
-  _model, logger, history = train_and_log_metrics(model, tfds_train, tfds_val, epoch, csv_metrics=csv_metrics_path)
+
+  """Composite function, or a wrapper, for all of the above.
+
+  A Wrapper for ease of modelling and training of a given dataset
+  into the generator made previously.
+  """
+
+  model_metrics = ['accuracy', 'mse', tf.keras.metrics.BinaryAccuracy()]
+
+  model = build_model(
+    tfds_train,
+    data_loader,
+    name=model_name
+  )
+
+  compile_model(model, metrics=model_metrics)
+
+  _model, logger, history = train_and_log_metrics(
+    model,
+    tfds_train,
+    tfds_val,
+    epoch,
+    csv_metrics_filepath=csv_metrics_filepath
+  )
+
   return model, logger, history
