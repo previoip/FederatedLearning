@@ -6,6 +6,7 @@ from urllib.parse import urlparse
 from re import compile as re_compile
 from os.path import join as path_join
 from os.path import pathsep, relpath
+import tempfile
 
 __re_illegal_chars = re_compile(r'[^\w_. -]')
 
@@ -21,24 +22,47 @@ def url_to_fp(url):
   else:
     return path_join(netloc_path, file_path).strip('/').strip('\\')
 
-def get_request(url, caching_enable=True, cache_folder='cache', params=None) -> bytes:
+def req_header(url, header=None, default_fallback_value=None):
+  resp = requests.head(url)
+  resp.raise_for_status()
+  if header is None:
+    return resp.headers
+  return resp.headers.get(header, default_fallback_value)
+
+def get_request(url, caching_enable=True, cache_folder='cache', params=None, chunk_size=1024*1024) -> BytesIO:
 
   cache_folder = Path(cache_folder).resolve()
   cache_file = cache_folder / url_to_fp(url) 
 
   if caching_enable and cache_file.exists() and cache_file.is_file():
     print(f'using cached file {relpath(cache_file)}')
-    content = cache_file.read_bytes()
+    buf = BytesIO(cache_file.read_bytes())
   else:
     print(f'downloading file to {relpath(cache_file)}')
-    req = requests.get(url, params=params)
-    req.raise_for_status()
-    content = req.content
-    req.close()
 
+    content_length = int(req_header(url, 'Content-Length', 0))
+    print('file size:', content_length)
+
+    resp = requests.get(url, params=params, stream=True)
+    resp.raise_for_status()
+
+    buf = BytesIO()
+
+    for chunk in resp.iter_content(chunk_size=chunk_size):
+      buf.write(chunk)
+      progress_frac = buf.getbuffer().nbytes / content_length
+      progress_frac = progress_frac if progress_frac < 1 else 1
+      
+      progress = int(progress_frac * 20)
+      print('progress: [',  ('='*progress).ljust(20), f'] {progress_frac*100:.2f}%', sep='')
+
+    resp.close()
+  
+  buf.seek(0)
   if caching_enable:
     cache_file.parent.mkdir(parents=True, exist_ok=True)
-    cache_file.write_bytes(content)
+    cache_file.write_bytes(buf.read())
+    buf.seek(0)
 
-  return content 
+  return buf
 

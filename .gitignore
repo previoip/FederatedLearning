@@ -157,3 +157,5 @@ cache
 *.png
 *.xlsx
 ./*.csv
+
+playground.ipynb

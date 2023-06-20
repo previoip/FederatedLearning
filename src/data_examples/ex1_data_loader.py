@@ -1,6 +1,6 @@
 import numpy as np
 from src.request_utils import get_request
-from src.archive_utils import unload_zip_from_bytes
+from src.archive_utils import unload_zip_from_io
 from pathlib import Path
 import pandas as pd
 
@@ -149,14 +149,16 @@ class ExampleDataLoader:
   def download(self, to_folder=None):
     if not to_folder or to_folder is None:
       to_folder = self.archive_dir
+    else:
+      self.archive_dir = to_folder
     b = get_request(self.archive_url)
-    unload_zip_from_bytes(b, to_folder)
+    unload_zip_from_io(b, to_folder)
     return self
 
   def load(self):
     data_glob_path = list(Path(self.archive_dir).rglob('*data'))
     data_file_path = list(filter(lambda x: x.is_file(), data_glob_path))[0]
-    self.df = pd.read_csv(data_file_path, header=None, names=self.data_spec.keys(), dtype=str, na_values='?')
+    self.df = pd.read_csv(data_file_path, header=None, names=self.data_spec.keys(), dtype='string', na_values='?')
     return self
 
   def clean(self):
