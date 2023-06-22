@@ -13,7 +13,7 @@ def _date_parser(datestr):
   s[0] = '{:02}'.format(int(s[0]))
   s[1] = '{:02}'.format(__month_shortname_index.index(s[1]) + 1)
   s[2], s[0] = s[0], s[2]
-  return np.datetime64('-'.join(s))
+  return '-'.join(s)
 
 class ExampleDataLoader:
   # MovieLens data loader
@@ -71,7 +71,7 @@ class ExampleDataLoader:
       'user_id': lambda x: str(int(x)-1)
     },
     'ratings': {
-      'unix_timestamp': lambda x: np.datetime64('1970-01-01') + np.timedelta64(x, 's'),
+      # 'unix_timestamp': lambda x: np.datetime64('1970-01-01') + np.timedelta64(x, 's'),
       'user_id': lambda x: str(int(x)-1),
       'movie_id': lambda x: str(int(x)-1),
     },
