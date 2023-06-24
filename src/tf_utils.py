@@ -20,6 +20,9 @@ def df_to_tfds(df, label_col_name, shuffle=True, batch_size=32):
   tfds = tfds.prefetch(batch_size)
   return tfds
 
+def df_ls_to_tfds_ls(df_ls, label_col_name, shuffle=True, batch_size=32):
+  return [df_to_tfds(df, label_col_name, shuffle, batch_size) for df in df_ls]
+
 
 def eval_metrics(model, tsdf_test, keras_metrics={}):
   """Evaluate prediction metrics on tensorflow

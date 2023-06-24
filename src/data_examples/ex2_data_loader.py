@@ -28,7 +28,7 @@ class ExampleDataLoader:
       'delimiter': '|',
       'encoding': 'latin-1',
       'headers': ['user_id', 'age', 'sex', 'occupation', 'zip_code'],
-      'types': ['uint64', 'int32', 'string', 'string', 'string']
+      'types': ['uint64', 'uint8', 'string', 'string', 'string']
     },
     'ratings': {
       'filename': 'u.data',
@@ -55,12 +55,12 @@ class ExampleDataLoader:
   }
 
   data_feature_cols = {
-    'users': ['age', 'sex', 'occupation', 'zip_code'],
-    'ratings': ['rating', 'unix_timestamp'],
-    'movies' : ['title', 'release_date', 'video_release_date']
+    'users': ['user_id', 'age', 'sex', 'occupation', 'zip_code'],
+    'ratings': ['rating'], # 'unix_timestamp'
+    'movies' : ['movie_id', 'title'] # 'release_date', 'video_release_date'
   }
 
-  data_movies_genres = [
+  data_feature_movies_genres = [
     'genre_unknown', 'Action', 'Adventure', 'Animation', 'Children', 'Comedy',
     'Crime', 'Documentary', 'Drama', 'Fantasy', 'Film-Noir', 'Horror',
     'Musical', 'Mystery', 'Romance', 'Sci-Fi', 'Thriller', 'War', 'Western'
@@ -88,6 +88,9 @@ class ExampleDataLoader:
     self.df_ratings = None
     self.df_movies = None
 
+    self.__header_dict = {}
+    self.__header_dict_is_loaded = False
+
   def download(self, to_folder=None):
     if not to_folder or to_folder is None:
       to_folder = self.archive_dir
@@ -95,6 +98,7 @@ class ExampleDataLoader:
       self.archive_dir = to_folder
     b = get_request(self.archive_url)
     unload_zip_from_io(b, to_folder)
+    b.close()
     return self
 
   def load(self):
@@ -113,5 +117,30 @@ class ExampleDataLoader:
     return self
 
   def clean(self):
-    self.df = self.df_ratings.merge(self.df_movies, on='movie_id')
-    self.df = self.df.merge(self.df_users, on='user_id')
+    self.df = self.df_ratings.merge(self.df_users, on='user_id')
+    self.df = self.df.merge(self.df_movies, on='movie_id')
+
+    feature_cols = [i for j in self.data_feature_cols.values() for i in j]
+
+    self.df = self.df[feature_cols]
+
+
+  def get_feature_values(self, feature_col:str, tb_name=None):
+    if tb_name is not None:
+      values = getattr(self, f'df_{tb_name}')[feature_col].unique()
+    else:
+      values = self.df[feature_col].unique()
+
+    return list(values)
+
+
+
+  def __load_header_dtype(self):
+    for meta in self.data_dir.values():
+      for n, v in enumerate(meta['headers']):
+        self.__header_dict[v] = meta['types'][n] 
+
+  def fetch_datatype(self, col_name):
+    if not self.__header_dict_is_loaded:
+      self.__load_header_dtype()
+    return self.__header_dict.get(col_name)

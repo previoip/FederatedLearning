@@ -1,50 +1,8 @@
 from tensorflow.keras import layers
 import tensorflow as tf
+import numpy as np
 
 from src.custom_types import TypeEnum
-
-from enum import Enum, auto
-
-class PreprocessingLayerEnum(Enum):
-  text_vectorization = auto()
-  normalization      = auto()
-  discretization     = auto()
-  category_encoding  = auto()
-  hashing            = auto()
-  string_lookup      = auto()
-  integer_lookup     = auto()
-
-
-class PreprocessingLayerConstructor:
-
-  @classmethod
-  def infer_method(preprocessing_layer_enum: PreprocessingLayerEnum) -> callable:
-    if preprocessing_layer_enum not in PreprocessingLayerEnum:
-      raise ValueError(f'enum is not in PreprocessingLayerEnum {preprocessing_layer_enum}')
-    
-    elif preprocessing_layer_enum == PreprocessingLayerEnum.text_vectorization:
-      raise NotImplementedError('preprocessing layer is not yet implemented')
-    
-    elif preprocessing_layer_enum == PreprocessingLayerEnum.normalization:
-      return gen_normalization_layer
-    
-    elif preprocessing_layer_enum == PreprocessingLayerEnum.discretization:
-      raise NotImplementedError('preprocessing layer is not yet implemented')
-    
-    elif preprocessing_layer_enum == PreprocessingLayerEnum.category_encoding:
-      return gen_multihot_categorical_encoding_layer
-    
-    elif preprocessing_layer_enum == PreprocessingLayerEnum.hashing:
-      raise NotImplementedError('preprocessing layer is not yet implemented')
-    
-    elif preprocessing_layer_enum == PreprocessingLayerEnum.string_lookup:
-      return tf.keras.layers.StringLookup
-    
-    elif preprocessing_layer_enum == PreprocessingLayerEnum.integer_lookup:
-      return tf.keras.layers.IntegerLookup
-
-    else:
-      raise NameError('undefined error')
 
 def gen_normalization_layer(tfds, col_name, features=None, axis=None):
   if features is None:
@@ -67,3 +25,33 @@ def gen_multihot_categorical_encoding_layer(tfds, col_name, type_enum: TypeEnum,
   encoder = tf.keras.layers.CategoryEncoding(num_tokens=indexer.vocabulary_size())
   
   return lambda f: encoder(indexer(f))
+
+
+def gen_string_lookup(tfds, col_name, vocabulary=None, max_tokens=None):
+  features = tfds.map(lambda x, _: x[col_name])
+  indexer = tf.keras.layers.StringLookup(max_tokens=max_tokens, vocabulary=vocabulary)
+  indexer.adapt(features)
+  return indexer
+
+def gen_string_embeddings(tfds, col_name, vocabulary=None, max_tokens=None, n_dim=None):
+  features = tfds.map(lambda x, _: x[col_name])
+  indexer = tf.keras.layers.StringLookup(max_tokens=max_tokens, vocabulary=vocabulary)
+
+  if vocabulary is None: 
+    indexer.adapt(features)
+    vocabulary = indexer.get_vocabulary()
+  
+  if n_dim is None:
+    n_dim = len(vocabulary)
+  
+  encoder = tf.keras.layers.Embedding(
+    input_dim=len(vocabulary),
+    output_dim=int(np.sqrt(n_dim)),
+    name=col_name
+  )
+
+  return lambda f: encoder(indexer(f)), indexer
+
+  
+
+
