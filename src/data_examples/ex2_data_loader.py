@@ -57,7 +57,7 @@ class ExampleDataLoader:
   data_feature_cols = {
     'users': ['user_id', 'age', 'sex', 'occupation', 'zip_code'],
     'ratings': ['rating'], # 'unix_timestamp'
-    'movies' : ['movie_id', 'title'] # 'release_date', 'video_release_date'
+    'movies' : ['movie_id'] # 'release_date', 'video_release_date'
   }
 
   data_feature_movies_genres = [
@@ -88,6 +88,19 @@ class ExampleDataLoader:
     self.df_ratings = None
     self.df_movies = None
 
+    self.mapped_features = {
+      'users': {
+        'user_id': {'incr': -1}
+      },
+      'ratings': {
+        'user_id': {'incr': -1},
+        'movie_id': {'incr': -1},
+      },
+      'movies': {
+        'movie_id': {'incr': -1},
+      }
+    }
+
     self.__header_dict = {}
     self.__header_dict_is_loaded = False
 
@@ -117,6 +130,19 @@ class ExampleDataLoader:
     return self
 
   def clean(self):
+
+    self.mapped_features['ratings'] = {}
+    self.mapped_features['ratings']['rating'] = {}
+    __rating_max = np.argmax(self.df_ratings['rating'].to_numpy())
+    __rating_min = np.argmin(self.df_ratings['rating'].to_numpy())
+    __rating_rng = __rating_max - __rating_min
+
+    self.mapped_features['ratings']['rating']['max'] = __rating_max
+    self.mapped_features['ratings']['rating']['min'] = __rating_min
+    self.mapped_features['ratings']['rating']['range'] = __rating_rng
+
+    self.df_ratings['rating'] = self.df_ratings['rating'].apply(lambda x: (x - __rating_min) / __rating_rng)
+
     self.df = self.df_ratings.merge(self.df_users, on='user_id')
     self.df = self.df.merge(self.df_movies, on='movie_id')
 
@@ -132,8 +158,6 @@ class ExampleDataLoader:
       values = self.df[feature_col].unique()
 
     return list(values)
-
-
 
   def __load_header_dtype(self):
     for meta in self.data_dir.values():

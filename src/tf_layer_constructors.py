@@ -26,7 +26,6 @@ def gen_multihot_categorical_encoding_layer(tfds, col_name, type_enum: TypeEnum,
   
   return lambda f: encoder(indexer(f))
 
-
 def gen_string_lookup(tfds, col_name, vocabulary=None, max_tokens=None):
   features = tfds.map(lambda x, _: x[col_name])
   indexer = tf.keras.layers.StringLookup(max_tokens=max_tokens, vocabulary=vocabulary)
@@ -34,10 +33,10 @@ def gen_string_lookup(tfds, col_name, vocabulary=None, max_tokens=None):
   return indexer
 
 def gen_string_embeddings(tfds, col_name, vocabulary=None, max_tokens=None, n_dim=None):
-  features = tfds.map(lambda x, _: x[col_name])
   indexer = tf.keras.layers.StringLookup(max_tokens=max_tokens, vocabulary=vocabulary)
 
   if vocabulary is None: 
+    features = tfds.map(lambda x, _: x[col_name])
     indexer.adapt(features)
     vocabulary = indexer.get_vocabulary()
   
@@ -50,8 +49,5 @@ def gen_string_embeddings(tfds, col_name, vocabulary=None, max_tokens=None, n_di
     name=col_name
   )
 
-  return lambda f: encoder(indexer(f)), indexer
-
-  
-
+  return lambda f: encoder(indexer(f)), encoder, indexer
 
