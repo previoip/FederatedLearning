@@ -101,8 +101,8 @@ class ExampleDataLoader:
       }
     }
 
-    self.__header_dict = {}
-    self.__header_dict_is_loaded = False
+    self._header_dict = {}
+    self._header_dict_is_loaded = False
 
   def download(self, to_folder=None):
     if not to_folder or to_folder is None:
@@ -135,19 +135,20 @@ class ExampleDataLoader:
     self.mapped_features['ratings']['rating'] = {}
     __rating_max = np.argmax(self.df_ratings['rating'].to_numpy())
     __rating_min = np.argmin(self.df_ratings['rating'].to_numpy())
-    __rating_rng = __rating_max - __rating_min
+    __rating_len = __rating_max - __rating_min
 
     self.mapped_features['ratings']['rating']['max'] = __rating_max
     self.mapped_features['ratings']['rating']['min'] = __rating_min
-    self.mapped_features['ratings']['rating']['range'] = __rating_rng
+    self.mapped_features['ratings']['rating']['len'] = __rating_len
 
-    self.df_ratings['rating'] = self.df_ratings['rating'].apply(lambda x: (x - __rating_min) / __rating_rng)
+    self.df_ratings['rating'] = self.df_ratings['rating'].apply(lambda x: (x - __rating_min) / __rating_len)
 
     self.df = self.df_ratings.merge(self.df_users, on='user_id')
     self.df = self.df.merge(self.df_movies, on='movie_id')
 
-    feature_cols = [i for j in self.data_feature_cols.values() for i in j]
 
+  def trunc(self):
+    feature_cols = [i for j in self.data_feature_cols.values() for i in j]
     self.df = self.df[feature_cols]
 
 
@@ -159,12 +160,12 @@ class ExampleDataLoader:
 
     return list(values)
 
-  def __load_header_dtype(self):
+  def _load_header_dtype(self):
     for meta in self.data_dir.values():
       for n, v in enumerate(meta['headers']):
-        self.__header_dict[v] = meta['types'][n] 
+        self._header_dict[v] = meta['types'][n] 
 
   def fetch_datatype(self, col_name):
-    if not self.__header_dict_is_loaded:
-      self.__load_header_dtype()
-    return self.__header_dict.get(col_name)
+    if not self._header_dict_is_loaded:
+      self._load_header_dtype()
+    return self._header_dict.get(col_name)
