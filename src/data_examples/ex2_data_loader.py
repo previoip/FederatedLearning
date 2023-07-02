@@ -28,14 +28,14 @@ class ExampleDataLoader:
       'delimiter': '|',
       'encoding': 'latin-1',
       'headers': ['user_id', 'age', 'sex', 'occupation', 'zip_code'],
-      'types': ['uint64', 'uint8', 'string', 'string', 'string']
+      'types': ['int', 'uint8', 'string', 'string', 'string']
     },
     'ratings': {
       'filename': 'u.data',
       'delimiter': '\t',
       'encoding': 'latin-1',
       'headers': ['user_id', 'movie_id', 'rating', 'unix_timestamp'],
-      'types': ['uint64', 'uint64', 'float64', 'uint64']
+      'types': ['int', 'int', 'float64', 'uint64']
     },
     'movies': {
       'filename': 'u.item',
@@ -46,7 +46,7 @@ class ExampleDataLoader:
       'Crime', 'Documentary', 'Drama', 'Fantasy', 'Film-Noir', 'Horror',
       'Musical', 'Mystery', 'Romance', 'Sci-Fi', 'Thriller', 'War', 'Western'
       ],
-      'types': ['uint64', 'string', 'string', 'string', 'string',
+      'types': ['int', 'string', 'string', 'string', 'string',
       'uint8', 'uint8', 'uint8', 'uint8', 'uint8', 'uint8',
       'uint8', 'uint8', 'uint8', 'uint8', 'uint8', 'uint8',
       'uint8', 'uint8', 'uint8', 'uint8', 'uint8', 'uint8', 'uint8'
@@ -129,8 +129,7 @@ class ExampleDataLoader:
       setattr(self, f'df_{tb_name}', df)
     return self
 
-  def clean(self):
-
+  def remap(self):
     self.mapped_features['ratings'] = {}
     self.mapped_features['ratings']['rating'] = {}
     __rating_max = np.argmax(self.df_ratings['rating'].to_numpy())
@@ -142,14 +141,23 @@ class ExampleDataLoader:
     self.mapped_features['ratings']['rating']['len'] = __rating_len
 
     self.df_ratings['rating'] = self.df_ratings['rating'].apply(lambda x: (x - __rating_min) / __rating_len)
+    return self
 
+
+  def clean(self):
+    return self
+
+
+  def merge(self):
     self.df = self.df_ratings.merge(self.df_users, on='user_id')
     self.df = self.df.merge(self.df_movies, on='movie_id')
+    return self
 
 
   def trunc(self):
     feature_cols = [i for j in self.data_feature_cols.values() for i in j]
     self.df = self.df[feature_cols]
+    return self
 
 
   def get_feature_values(self, feature_col:str, tb_name=None):
