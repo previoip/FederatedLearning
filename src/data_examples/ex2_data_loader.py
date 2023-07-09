@@ -153,6 +153,20 @@ class ExampleDataLoader:
     self.df = self.df.merge(self.df_movies, on='movie_id')
     return self
 
+  def concat_genres(self, delimiter='|'):
+    genres_df = self.df_movies[self.data_feature_movies_genres]
+    genres = []
+    for i in genres_df.index:
+      mask = genres_df.loc[i, :]
+      genre_ls = mask[mask == 1].axes[0].tolist()
+      genres.append(genre_ls)
+
+    self.df_movies.drop(self.data_feature_movies_genres, axis=1, inplace=True)
+    self.df_movies['genres'] = [ delimiter.join(i) for i in genres ]
+    self.df_movies['genres_idxs'] = [ [self.data_feature_movies_genres.index(j) for j in i] for i in genres ]
+
+
+    return self
 
   def trunc(self):
     feature_cols = [i for j in self.data_feature_cols.values() for i in j]

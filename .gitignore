@@ -158,5 +158,6 @@ cache
 *.xlsx
 ./*.csv
 
-playground.ipynb
+playground*.ipynb
 src/models/cfw.py
+debug.py
