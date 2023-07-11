@@ -52,6 +52,51 @@ class ExampleDataLoader:
     'movies' : ['movie_id'] # 'release_date', 'video_release_date'
   }
 
+  data_occupation_map = [
+    'other',
+    'academic/educator',
+    'artist',
+    'clerical/admin',
+    'college/grad student',
+    'customer service',
+    'doctor/health care',
+    'executive/managerial',
+    'farmer',
+    'homemaker',
+    'K-12 student',
+    'lawyer',
+    'programmer',
+    'retired',
+    'sales/marketing',
+    'scientist',
+    'self-employed',
+    'technician/engineer',
+    'tradesman/craftsman',
+    'unemployed',
+    'writer'
+  ]
+
+  data_genres_map = [
+    'Action',
+    'Adventure',
+    'Animation',
+    'Children\'s',
+    'Comedy',
+    'Crime',
+    'Documentary',
+    'Drama',
+    'Fantasy',
+    'Film-Noir',
+    'Horror',
+    'Musical',
+    'Mystery',
+    'Romance',
+    'Sci-Fi',
+    'Thriller',
+    'War',
+    'Western'
+  ]
+
   data_converters = {
     'users': {
       'user_id': lambda x: str(int(x)-1)
@@ -127,6 +172,9 @@ class ExampleDataLoader:
     self.mapped_features['ratings']['rating']['len'] = __rating_len
 
     self.df_ratings['rating'] = self.df_ratings['rating'].apply(lambda x: (x - __rating_min) / __rating_len)
+
+    self.df_users['occupation'] = self.df_users['occupation'].apply(lambda x: self.data_occupation_map[int(x)])
+
     return self
 
   def clean(self):

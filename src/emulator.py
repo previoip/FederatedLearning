@@ -46,7 +46,6 @@ class TaskWrapper:
     self.state = 'stopped'
     self.task_cfg = {
       'run_once': False,
-      'do_log_events': True
     }
     self.set_host(host)
 
@@ -91,6 +90,8 @@ class UnitProcess(__TreeNode):
     return task
 
   def run_task(self, name, *args, **kwargs):
+    if not name in self.task_queue:
+      return
     kwargs.update({'host': self, 'local_vars': self.local_vars})
     self.task_queue[name].run_task(*args, **kwargs)
 
@@ -110,6 +111,9 @@ class UnitProcess(__TreeNode):
     else:
       raise ValueError("Could not create other instance of class on current tree node")
     return o
+
+  def attach(self, other: "UnitProcess"):
+    self._append_child(child=other)
 
   def force_run_children_tasks(self, *args, **kwargs):
     for child in self.children:
