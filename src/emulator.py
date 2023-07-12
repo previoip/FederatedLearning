@@ -41,7 +41,7 @@ class TaskWrapper:
     self.name = str(id(self)) if name is None else name
     self.task_fn = None
     self.host = None
-    self.host_logger = None
+    self.host_logger : logging.Logger = None
     self.has_logger = False
     self.state = 'stopped'
     self.task_cfg = {
@@ -55,9 +55,10 @@ class TaskWrapper:
     self.host_logger = self.host.logger
     self.has_logger = True
 
-  def _log(self, event='INFO', msg=''):
+  def log_event(self, msg=''):
     if not self.has_logger:
       return
+    self.host_logger.info(msg)
 
   def set_host(self, host: "UnitProcess"):
     self.host = host
@@ -82,6 +83,7 @@ class UnitProcess(__TreeNode):
     super().__init__(name=name, parent=parent)
     self.task_queue = {}
     self.local_vars = {}
+    self.logger = None
 
   def create_task(self, name=None):
     task = TaskWrapper(name=name)
@@ -115,9 +117,18 @@ class UnitProcess(__TreeNode):
   def attach(self, other: "UnitProcess"):
     self._append_child(child=other)
 
+  def get_child_by_name(self, name):
+    for child in self.children:
+      if child.name == name:
+        return child
+    return None
+
   def force_run_children_tasks(self, *args, **kwargs):
     for child in self.children:
       child.run_all_tasks(*args, **kwargs)
+
+  def set_logger(self, logger):
+    self.logger = logger
 
 if __name__ == '__main__':
   root = UnitProcess()

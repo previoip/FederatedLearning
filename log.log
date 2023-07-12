@@ -1,0 +1,30 @@
+2023-07-12 21:22:04,420 - ClientServer [001] - INFO - invoked: invoke_content_request: ClientServer [001] | 420
+2023-07-12 21:22:04,420 - ClientServer [001] - INFO - event: ClientServer [001] cache missed
+2023-07-12 21:22:04,420 - BaseServer - INFO - invoked: handle_request: BaseServer -> ClientServer [001] | 420
+2023-07-12 21:22:04,420 - BaseServer - INFO - event: BaseServer <- ClientServer [001] cache missed
+2023-07-12 21:22:04,421 - BaseServer - INFO - invoked: handle_cache_overflow
+2023-07-12 21:22:04,421 - ClientServer [001] - INFO - invoked: handle_cache_overflow
+2023-07-12 21:22:04,421 - ClientServer [001] - INFO - invoked: invoke_content_request: ClientServer [001] | 123
+2023-07-12 21:22:04,421 - ClientServer [001] - INFO - event: ClientServer [001] cache missed
+2023-07-12 21:22:04,421 - BaseServer - INFO - invoked: handle_request: BaseServer -> ClientServer [001] | 123
+2023-07-12 21:22:04,421 - BaseServer - INFO - event: BaseServer <- ClientServer [001] cache missed
+2023-07-12 21:22:04,421 - BaseServer - INFO - invoked: handle_cache_overflow
+2023-07-12 21:22:04,421 - ClientServer [001] - INFO - invoked: handle_cache_overflow
+2023-07-12 21:22:04,421 - ClientServer [001] - INFO - invoked: invoke_content_request: ClientServer [001] | 123
+2023-07-12 21:22:04,421 - ClientServer [001] - INFO - event: ClientServer [001] cache hit
+2023-07-12 21:22:04,421 - ClientServer [001] - INFO - invoked: handle_cache_overflow
+2023-07-12 21:22:04,421 - ClientServer [001] - INFO - invoked: invoke_content_request: ClientServer [001] | 420
+2023-07-12 21:22:04,421 - ClientServer [001] - INFO - event: ClientServer [001] cache hit
+2023-07-12 21:22:04,421 - ClientServer [001] - INFO - invoked: handle_cache_overflow
+2023-07-12 21:22:04,451 - ClientServer [099] - INFO - invoked: invoke_content_request: ClientServer [099] | 234
+2023-07-12 21:22:04,451 - ClientServer [099] - INFO - event: ClientServer [099] cache missed
+2023-07-12 21:22:04,452 - BaseServer - INFO - invoked: handle_request: BaseServer -> ClientServer [099] | 234
+2023-07-12 21:22:04,452 - BaseServer - INFO - event: BaseServer <- ClientServer [099] cache missed
+2023-07-12 21:22:04,452 - BaseServer - INFO - invoked: handle_cache_overflow
+2023-07-12 21:22:04,452 - ClientServer [099] - INFO - invoked: handle_cache_overflow
+2023-07-12 21:22:04,452 - ClientServer [099] - INFO - invoked: invoke_content_request: ClientServer [099] | 345
+2023-07-12 21:22:04,452 - ClientServer [099] - INFO - event: ClientServer [099] cache missed
+2023-07-12 21:22:04,452 - BaseServer - INFO - invoked: handle_request: BaseServer -> ClientServer [099] | 345
+2023-07-12 21:22:04,452 - BaseServer - INFO - event: BaseServer <- ClientServer [099] cache missed
+2023-07-12 21:22:04,452 - BaseServer - INFO - invoked: handle_cache_overflow
+2023-07-12 21:22:04,453 - ClientServer [099] - INFO - invoked: handle_cache_overflow
