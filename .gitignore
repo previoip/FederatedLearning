@@ -156,7 +156,9 @@ cache
 *.png
 *.xlsx
 ./*.csv
+*.log
 
 playground*.ipynb
 src/models/cfw.py
 debug.py
+*.log
